@@ -1,36 +1,103 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Playground
 
-## Getting Started
+## Steps to create a simple AI playground
 
-First, run the development server:
+1. Create a new Next.js app
+pnpm create next-app@latest my-app --yes
+cd my-app
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+2. Add openai
+pnpm add openai
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. Add .env.local
+.env.local
+OPENAI_API_KEY=your_api_key_here
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+4. src/api/chat/route.js
+import { NextResponse } from "next/server";
+import OpenAI from "openai";
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+const client = new OpenAI({ apiKey: process.env.OPENAI_KEY });
 
-## Learn More
+export async function POST(request) {
+  const { prompt } = await request.json()
+  try {
+    const response = await client.responses.create({
+      model: "gpt-4.1-mini",
+      input: [
+        {
+          role: "system",
+          content: "Answer quoting a philosopher."
+        }, 
+        {
+          role: "user",
+          content: prompt
+        }, 
+      ] 
+    });
+    return NextResponse.json({ output: response.output_text })
+  } catch (error) {
+    console.error("Error in OpenaAI call: ", error)
+    return NextResponse.json(
+      { error: error.message || "Internal error"}, 
+      { status: 500}
+    )
+  }
+}
 
-To learn more about Next.js, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. app/page.tsx
+"use client";
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+import { useState } from "react";
 
-## Deploy on Vercel
+export default function Home() {
+  const [prompt, setPrompt] = useState("");
+  const [response, setResponse] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+  const fetchResponse = async (prompt: string) => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/chat", {
+      method: "POST",
+      body: JSON.stringify({ prompt }),
+    });
+      const data = await response.json();
+      setResponse(data.output);
+    } catch (error) {
+      console.error("Error fetching response:", error);
+      setError("Error fetching response. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    fetchResponse(prompt);
+    setPrompt("");
+  };
+
+  const handlePromptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPrompt(e.target.value);
+  };
+
+  return (
+    <div>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          placeholder="Enter your message"
+          value={prompt}
+          onChange={handlePromptChange}
+        />
+        <button type="submit">Ask the AI</button>
+      </form>
+      {response && <p>{response}</p>}
+      {error && <p>{error}</p>}
+      {loading && <p>Loading...</p>}
+    </div>
+  );
+}
