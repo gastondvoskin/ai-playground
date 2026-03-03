@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_KEY });
 const MAX_TURNS = 20;
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
@@ -40,6 +39,7 @@ function parseMessages(rawMessages) {
 }
 
 export async function POST(request) {
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   try {
     const formData = await request.formData();
     const rawMessages = formData.get("messages");

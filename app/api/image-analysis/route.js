@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_KEY });
-
 export async function POST(request) {
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const { imageUrl, question } = await request.json();
   try {
     const response = await client.responses.create({
