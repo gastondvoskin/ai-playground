@@ -31,6 +31,7 @@ export default function RootLayout({
         <nav>
           <Link href="/">Home</Link>
           <Link href="/chat">Chat</Link>
+          <Link href="/multi-turn">Multi-Turn</Link>
           <Link href="/image-analysis">Image Analysis</Link>
         </nav>
         {children}
